@@ -140,6 +140,9 @@ import { AuditLogInterceptor } from './audit/interceptors/audit-log.interceptor'
     {
       provide: APP_INTERCEPTOR,
       useClass: AuditLogInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
       useClass: DeprecationInterceptor,
     },
   ],
