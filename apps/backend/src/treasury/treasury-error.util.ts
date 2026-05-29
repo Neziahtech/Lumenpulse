@@ -38,7 +38,7 @@ export function mapContractErrorCode(
   fallbackMessage?: string,
   beneficiary?: string,
 ): TreasuryException {
-  switch (code) {
+  switch (code as TreasuryContractError) {
     case TreasuryContractError.NotInitialized:
       return new TreasuryNotInitializedException();
     case TreasuryContractError.Unauthorized:

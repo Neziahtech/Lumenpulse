@@ -30,7 +30,8 @@ export class StreamStateDto {
   unlockedAmount: string;
 
   @ApiProperty({
-    description: 'Amount not yet claimed: totalAmount - claimedAmount (stroops)',
+    description:
+      'Amount not yet claimed: totalAmount - claimedAmount (stroops)',
     example: '750000000',
   })
   remainingAmount: string;

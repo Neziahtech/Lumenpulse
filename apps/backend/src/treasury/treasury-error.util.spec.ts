@@ -13,9 +13,9 @@ import {
 
 describe('extractContractErrorCode', () => {
   it('extracts the code from a HostError diagnostic', () => {
-    expect(
-      extractContractErrorCode('HostError: Error(Contract, #3) ...'),
-    ).toBe(3);
+    expect(extractContractErrorCode('HostError: Error(Contract, #3) ...')).toBe(
+      3,
+    );
   });
 
   it('extracts the code with flexible whitespace', () => {

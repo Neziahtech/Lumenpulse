@@ -150,7 +150,7 @@ export class TreasurySorobanClient {
       const prepared = rpc.assembleTransaction(tx, simulation).build();
       prepared.sign(keypair);
 
-      return await this.submitAndConfirm(server, prepared, params.beneficiary);
+      return await this.submitAndConfirm(server, prepared);
     } catch (error) {
       throw this.normalizeError(error);
     }
@@ -160,7 +160,6 @@ export class TreasurySorobanClient {
   private async submitAndConfirm(
     server: rpc.Server,
     transaction: ReturnType<TransactionBuilder['build']>,
-    beneficiary: string,
   ): Promise<SubmittedTransaction> {
     const sendResponse = await server.sendTransaction(transaction);
 
@@ -274,7 +273,7 @@ export class TreasurySorobanClient {
       'getStatus' in error &&
       typeof (error as { getStatus: unknown }).getStatus === 'function'
     ) {
-      return error as Error;
+      return error as unknown as Error;
     }
 
     const message = error instanceof Error ? error.message : String(error);

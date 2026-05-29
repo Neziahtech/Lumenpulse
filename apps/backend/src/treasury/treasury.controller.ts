@@ -51,7 +51,10 @@ export class TreasuryController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Caller is not an admin' })
   @ApiResponse({ status: 502, description: 'Treasury transaction failed' })
-  @ApiResponse({ status: 503, description: 'Treasury not configured / RPC down' })
+  @ApiResponse({
+    status: 503,
+    description: 'Treasury not configured / RPC down',
+  })
   async allocateBudget(
     @Body() dto: AllocateBudgetDto,
   ): Promise<AllocateBudgetResponseDto> {
@@ -78,7 +81,10 @@ export class TreasuryController {
   })
   @ApiResponse({ status: 400, description: 'Invalid beneficiary address' })
   @ApiResponse({ status: 404, description: 'No stream found for beneficiary' })
-  @ApiResponse({ status: 503, description: 'Treasury not configured / RPC down' })
+  @ApiResponse({
+    status: 503,
+    description: 'Treasury not configured / RPC down',
+  })
   async getStream(
     @Param('beneficiary') beneficiary: string,
   ): Promise<StreamStateDto> {
