@@ -40,6 +40,7 @@ export class SorobanEventIngestionGuard implements CanActivate {
       : DEFAULT_TIMESTAMP_TOLERANCE_MS;
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<RequestWithRawBody>();
 
@@ -47,7 +48,10 @@ export class SorobanEventIngestionGuard implements CanActivate {
     const rawBody = request.rawBody;
 
     if (!rawBody || !(rawBody instanceof Buffer) || rawBody.length === 0) {
-      this.logger.warn({ requestId }, 'Raw body not available for verification');
+      this.logger.warn(
+        { requestId },
+        'Raw body not available for verification',
+      );
       throw new UnauthorizedException('Request body not available');
     }
 
@@ -57,9 +61,7 @@ export class SorobanEventIngestionGuard implements CanActivate {
     const timestampHeader = request.headers[SOROBAN_TIMESTAMP_HEADER] as
       | string
       | undefined;
-    const nonce = request.headers[SOROBAN_NONCE_HEADER] as
-      | string
-      | undefined;
+    const nonce = request.headers[SOROBAN_NONCE_HEADER] as string | undefined;
 
     if (!signature) {
       this.logger.warn({ requestId }, 'Missing soroban signature header');
@@ -125,8 +127,9 @@ export class SorobanEventIngestionGuard implements CanActivate {
       requestId,
       verifiedAt: new Date(),
     };
-    (request as Request & { verifiedWebhook?: VerifiedWebhookRequest }).verifiedWebhook =
-      verified;
+    (
+      request as Request & { verifiedWebhook?: VerifiedWebhookRequest }
+    ).verifiedWebhook = verified;
 
     this.logger.log({ requestId }, 'Soroban webhook verified successfully');
 
