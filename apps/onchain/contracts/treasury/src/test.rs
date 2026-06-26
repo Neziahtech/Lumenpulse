@@ -13,12 +13,14 @@ struct MultisigFixture<'a> {
     client: TreasuryContractClient<'a>,
     signer_a: Address,
     signer_b: Address,
+    #[allow(dead_code)]
     signer_c: Address,
     outsider: Address,
     admin: Address,
     beneficiary: Address,
     new_admin: Address,
     new_beneficiary: Address,
+    #[allow(dead_code)]
     _token_admin: Address,
 }
 
@@ -422,11 +424,8 @@ fn test_rotate_beneficiary_stream_not_found() {
 fn test_set_admin_via_multisig_rejects_outsider() {
     let f = MultisigFixture::new();
     assert_eq!(
-        f.client.try_set_admin_via_multisig(
-            &f.outsider,
-            &0u64,
-            &f.new_admin,
-        ),
+        f.client
+            .try_set_admin_via_multisig(&f.outsider, &0u64, &f.new_admin,),
         Err(Ok(TreasuryError::Unauthorized))
     );
 }
@@ -442,7 +441,8 @@ fn test_set_admin_via_multisig_requires_approval() {
 
     // Executing a Pending proposal must fail.
     assert_eq!(
-        f.client.try_set_admin_via_multisig(&f.signer_a, &pid, &f.new_admin),
+        f.client
+            .try_set_admin_via_multisig(&f.signer_a, &pid, &f.new_admin),
         Err(Ok(TreasuryError::ProposalNotApproved))
     );
 
@@ -455,7 +455,8 @@ fn test_set_admin_via_multisig_requires_approval() {
 fn test_set_admin_via_multisig_unknown_proposal() {
     let f = MultisigFixture::new();
     assert_eq!(
-        f.client.try_set_admin_via_multisig(&f.signer_a, &999u64, &f.new_admin),
+        f.client
+            .try_set_admin_via_multisig(&f.signer_a, &999u64, &f.new_admin),
         Err(Ok(TreasuryError::ProposalNotFound))
     );
 }
@@ -471,7 +472,8 @@ fn test_set_admin_via_multisig_succeeds_with_approval() {
     f.client.sign_proposal(&f.signer_b, &pid);
     assert_eq!(f.client.get_proposal(&pid).status, ProposalStatus::Approved);
 
-    f.client.set_admin_via_multisig(&f.signer_a, &pid, &f.new_admin);
+    f.client
+        .set_admin_via_multisig(&f.signer_a, &pid, &f.new_admin);
 
     assert_eq!(f.client.get_admin(), f.new_admin);
     assert_eq!(f.client.get_proposal(&pid).status, ProposalStatus::Executed);
@@ -488,12 +490,15 @@ fn test_set_admin_via_multisig_succeeds_with_approval() {
 fn test_set_admin_via_multisig_wrong_action_rejected() {
     let f = MultisigFixture::new();
 
-    let pid = f.client.propose(&f.signer_a, &ProposalAction::RotateBeneficiary);
+    let pid = f
+        .client
+        .propose(&f.signer_a, &ProposalAction::RotateBeneficiary);
     f.client.sign_proposal(&f.signer_b, &pid);
 
     // SetAdmin entry point must not consume a RotateBeneficiary proposal.
     assert_eq!(
-        f.client.try_set_admin_via_multisig(&f.signer_a, &pid, &f.new_admin),
+        f.client
+            .try_set_admin_via_multisig(&f.signer_a, &pid, &f.new_admin),
         Err(Ok(TreasuryError::WrongProposalAction))
     );
 }
@@ -514,7 +519,8 @@ fn test_set_admin_via_multisig_expired_proposal_rejected() {
 
     // Status is now Expired — any gated entry point must reject.
     assert_eq!(
-        f.client.try_set_admin_via_multisig(&f.signer_a, &pid, &f.new_admin),
+        f.client
+            .try_set_admin_via_multisig(&f.signer_a, &pid, &f.new_admin),
         Err(Ok(TreasuryError::ProposalNotActive))
     );
 }
@@ -527,10 +533,14 @@ fn test_set_admin_via_multisig_cancelled_proposal_rejected() {
     let pid = f.client.propose(&f.signer_a, &ProposalAction::SetAdmin);
     f.client.sign_proposal(&f.signer_b, &pid);
     f.client.cancel_proposal(&f.signer_a, &pid);
-    assert_eq!(f.client.get_proposal(&pid).status, ProposalStatus::Cancelled);
+    assert_eq!(
+        f.client.get_proposal(&pid).status,
+        ProposalStatus::Cancelled
+    );
 
     assert_eq!(
-        f.client.try_set_admin_via_multisig(&f.signer_a, &pid, &f.new_admin),
+        f.client
+            .try_set_admin_via_multisig(&f.signer_a, &pid, &f.new_admin),
         Err(Ok(TreasuryError::ProposalNotActive))
     );
 }
@@ -541,16 +551,14 @@ fn test_set_admin_via_multisig_cancelled_proposal_rejected() {
 fn test_rotate_beneficiary_via_multisig_succeeds() {
     let f = MultisigFixture::new();
 
-    let pid = f.client.propose(&f.signer_a, &ProposalAction::RotateBeneficiary);
+    let pid = f
+        .client
+        .propose(&f.signer_a, &ProposalAction::RotateBeneficiary);
     f.client.sign_proposal(&f.signer_b, &pid);
 
     f.env.ledger().set_timestamp(1500);
-    f.client.rotate_beneficiary_via_multisig(
-        &f.signer_a,
-        &pid,
-        &f.beneficiary,
-        &f.new_beneficiary,
-    );
+    f.client
+        .rotate_beneficiary_via_multisig(&f.signer_a, &pid, &f.beneficiary, &f.new_beneficiary);
 
     // Old stream gone, new stream holds the (still-unlocked) remaining amount.
     assert_eq!(
@@ -563,12 +571,7 @@ fn test_rotate_beneficiary_via_multisig_succeeds() {
     // Replay is rejected.
     assert!(f
         .client
-        .try_rotate_beneficiary_via_multisig(
-            &f.signer_a,
-            &pid,
-            &f.new_beneficiary,
-            &f.beneficiary,
-        )
+        .try_rotate_beneficiary_via_multisig(&f.signer_a, &pid, &f.new_beneficiary, &f.beneficiary,)
         .is_err());
 }
 
@@ -577,7 +580,9 @@ fn test_rotate_beneficiary_via_multisig_succeeds() {
 fn test_rotate_beneficiary_via_multisig_rejects_outsider() {
     let f = MultisigFixture::new();
 
-    let pid = f.client.propose(&f.signer_a, &ProposalAction::RotateBeneficiary);
+    let pid = f
+        .client
+        .propose(&f.signer_a, &ProposalAction::RotateBeneficiary);
     f.client.sign_proposal(&f.signer_b, &pid);
 
     assert_eq!(
@@ -619,7 +624,10 @@ fn test_cancel_proposal_changes_status() {
     let pid = f.client.propose(&f.signer_a, &ProposalAction::SetAdmin);
     assert_eq!(f.client.get_proposal(&pid).status, ProposalStatus::Pending);
     f.client.cancel_proposal(&f.signer_a, &pid);
-    assert_eq!(f.client.get_proposal(&pid).status, ProposalStatus::Cancelled);
+    assert_eq!(
+        f.client.get_proposal(&pid).status,
+        ProposalStatus::Cancelled
+    );
 }
 
 /// Threshold of 1 means a single signer with weight ≥ 1 auto-approves on propose.
@@ -729,7 +737,9 @@ fn test_configure_multisig_validates_input() {
 fn test_proposal_ids_are_monotonic() {
     let f = MultisigFixture::new();
     let id1 = f.client.propose(&f.signer_a, &ProposalAction::SetAdmin);
-    let id2 = f.client.propose(&f.signer_a, &ProposalAction::RotateBeneficiary);
+    let id2 = f
+        .client
+        .propose(&f.signer_a, &ProposalAction::RotateBeneficiary);
     let id3 = f.client.propose(&f.signer_a, &ProposalAction::SetAdmin);
     assert_eq!(id1, 0);
     assert_eq!(id2, 1);
