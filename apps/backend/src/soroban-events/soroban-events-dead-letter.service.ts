@@ -175,7 +175,7 @@ export class SorobanEventsDeadLetterService {
       .getManyAndCount();
 
     return {
-      data: data.map(this.entityToDto),
+      data: data.map((dlq) => this.entityToDto(dlq)),
       page,
       limit,
       total,
@@ -399,28 +399,28 @@ export class SorobanEventsDeadLetterService {
    * @returns DLQ statistics
    */
   async getStats(): Promise<DeadLetterStatsDto> {
-    const [total, pending, replayed, resolved, mostCommonErrorRow] =
-      await Promise.all([
-        this.dlqRepo.count(),
-        this.dlqRepo.countBy({ status: DeadLetterStatus.PENDING }),
-        this.dlqRepo.countBy({ status: DeadLetterStatus.REPLAYED }),
-        this.dlqRepo.countBy({ status: DeadLetterStatus.RESOLVED }),
-        this.dlqRepo
-          .createQueryBuilder('dlq')
-          .select('dlq.lastErrorMessage', 'errorMessage')
-          .addSelect('COUNT(*)', 'count')
-          .groupBy('dlq.lastErrorMessage')
-          .orderBy('count', 'DESC')
-          .limit(1)
-          .getRawOne(),
-      ]);
+    const [total, pending, replayed, resolved] = await Promise.all([
+      this.dlqRepo.count(),
+      this.dlqRepo.countBy({ status: DeadLetterStatus.PENDING }),
+      this.dlqRepo.countBy({ status: DeadLetterStatus.REPLAYED }),
+      this.dlqRepo.countBy({ status: DeadLetterStatus.RESOLVED }),
+    ]);
 
-    const oldestUnresolved = await this.dlqRepo
+    const mostCommonErrorRow = (await this.dlqRepo
+      .createQueryBuilder('dlq')
+      .select('dlq.lastErrorMessage', 'errorMessage')
+      .addSelect('COUNT(*)', 'count')
+      .groupBy('dlq.lastErrorMessage')
+      .orderBy('count', 'DESC')
+      .limit(1)
+      .getRawOne()) as { errorMessage: string | null } | null;
+
+    const oldestUnresolved = (await this.dlqRepo
       .createQueryBuilder('dlq')
       .where('dlq.status != :resolved', { resolved: DeadLetterStatus.RESOLVED })
       .orderBy('dlq.createdAt', 'ASC')
-      .select('dlq.createdAt')
-      .getOne();
+      .select('dlq.createdAt', 'createdAt')
+      .getRawOne()) as { createdAt: Date | null } | null;
 
     return {
       total,
