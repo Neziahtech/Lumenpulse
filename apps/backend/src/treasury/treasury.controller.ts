@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Param,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -24,6 +25,8 @@ import {
   AllocateBudgetResponseDto,
   StreamStateDto,
 } from './dto/stream-response.dto';
+import { RotateBeneficiaryDto } from './dto/rotate-beneficiary.dto';
+import { StreamPreviewDto, StreamPreviewResponseDto } from './dto/stream-preview.dto';
 import { TreasuryService } from './treasury.service';
 
 @ApiTags('treasury')
@@ -89,5 +92,67 @@ export class TreasuryController {
     @Param('beneficiary') beneficiary: string,
   ): Promise<StreamStateDto> {
     return this.treasuryService.getStream(beneficiary);
+  }
+
+  @Post('streams/rotate')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Rotate beneficiary for a treasury stream (admin only)',
+    description:
+      'Builds, signs and submits a Soroban `rotate_beneficiary` transaction to ' +
+      'the treasury contract, rotating the beneficiary while preserving accrued ' +
+      'claim state.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Beneficiary rotated successfully',
+    type: AllocateBudgetResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid request parameters' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Caller is not an admin' })
+  @ApiResponse({
+    status: 404,
+    description: 'Stream not found for old beneficiary',
+  })
+  @ApiResponse({ status: 502, description: 'Treasury transaction failed' })
+  @ApiResponse({
+    status: 503,
+    description: 'Treasury not configured / RPC down',
+  })
+  async rotateBeneficiary(
+    @Body() dto: RotateBeneficiaryDto,
+  ): Promise<AllocateBudgetResponseDto> {
+    return this.treasuryService.rotateBeneficiary(dto);
+  }
+
+  @Get('streams/preview')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Preview unlocked treasury stream amounts for a beneficiary',
+    description:
+      'Read-only endpoint that computes unlocked, claimed, and remaining ' +
+      'stream amounts using the same linear-vesting formula as the on-chain ' +
+      'contract. No transaction is submitted. Useful for dashboards and ' +
+      'debugging tools.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Stream preview calculated successfully',
+    type: StreamPreviewResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid beneficiary address or atTime' })
+  @ApiResponse({ status: 404, description: 'No stream found for beneficiary' })
+  @ApiResponse({
+    status: 503,
+    description: 'Treasury not configured / RPC down',
+  })
+  async previewStream(
+    @Query() dto: StreamPreviewDto,
+  ): Promise<StreamPreviewResponseDto> {
+    return this.treasuryService.previewStream(dto);
   }
 }
