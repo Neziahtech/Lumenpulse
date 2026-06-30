@@ -7,6 +7,7 @@ import { ContractHealthService } from './contract-health.service';
 import { HealthController } from './health.controller';
 import { HealthService } from './health.service';
 import { SmokeEndpointService } from './smoke-endpoint.service';
+import { LatencyBudgetHealthService } from './latency-budget.health.service';
 
 @Module({
   imports: [
@@ -20,5 +21,6 @@ import { SmokeEndpointService } from './smoke-endpoint.service';
   ],
   controllers: [HealthController],
   providers: [HealthService, ContractHealthService, SmokeEndpointService],
+  providers: [HealthService, ContractHealthService, LatencyBudgetHealthService],
 })
 export class HealthModule {}
